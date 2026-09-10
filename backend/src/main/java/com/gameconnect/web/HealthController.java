@@ -13,7 +13,6 @@ public class HealthController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
-        System.out.println("I am in the controller");
         return Map.of(
                 "status", "UP",
                 "service", "game-connect",

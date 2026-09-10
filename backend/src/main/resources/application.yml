@@ -16,6 +16,13 @@ spring:
 server:
   port: ${PORT:8080}
 
+jwt:
+  secret: ${JWT_SECRET:myDefaultDevSecretKeyMustBeAtLeast32BytesLongForHs256}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
+cookie:
+  secure: ${COOKIE_SECURE:false}
+
 management:
   endpoints:
     web:

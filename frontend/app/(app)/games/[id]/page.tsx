@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import type { PageProps } from "next";
+import type PageProps from "next";
 
 export default async function GameDetailPage(props: PageProps<"/games/[id]">) {
   const { id } = await props.params;
