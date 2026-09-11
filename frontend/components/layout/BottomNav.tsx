@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/games", label: "Games" },
@@ -12,9 +14,21 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { logout } = useAuth();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const isActive = (href: string) =>
     href === "/games" ? pathname.startsWith("/games") : pathname === href;
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      router.push("/login");
+    }
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-zinc-200 bg-white">
@@ -33,6 +47,15 @@ export function BottomNav() {
             </Link>
           </li>
         ))}
+        <li className="flex-1">
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex w-full flex-col items-center gap-0.5 py-2.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-800 disabled:opacity-50"
+          >
+            <span>{loggingOut ? "Signing out..." : "Sign Out"}</span>
+          </button>
+        </li>
       </ul>
     </nav>
   );
