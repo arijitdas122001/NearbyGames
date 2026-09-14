@@ -84,12 +84,8 @@ public class AuthController {
                 user.getDisplayName(),
                 user.getBio(),
                 user.getProfileImageUrl(),
-<<<<<<< HEAD
                 user.getSkillLevel(),
                 user.getPosition());
-=======
-                user.getSkillLevel());
->>>>>>> f43f156 (phase 2 done, frontend set up and authentication)
 
         return ResponseEntity.ok(response);
     }

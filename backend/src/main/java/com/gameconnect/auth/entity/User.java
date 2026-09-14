@@ -19,13 +19,10 @@ public class User {
         BEGINNER, INTERMEDIATE, ADVANCED
     }
 
-<<<<<<< HEAD
     public enum Position {
         GOALKEEPER, DEFENDER, MIDFIELDER, WINGER, STRIKER, FLEXIBLE
     }
 
-=======
->>>>>>> f43f156 (phase 2 done, frontend set up and authentication)
     @Id
     private UUID id;
 
@@ -48,16 +45,10 @@ public class User {
     @Column(name = "skill_level", nullable = false, length = 20)
     private SkillLevel skillLevel = SkillLevel.BEGINNER;
 
-<<<<<<< HEAD
     @Enumerated(EnumType.STRING)
     @Column(name = "position", length = 20)
-    private Position position;
 
-=======
->>>>>>> f43f156 (phase 2 done, frontend set up and authentication)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
     @PrePersist
     protected void onCreate() {
         if (id == null) {
@@ -121,7 +112,6 @@ public class User {
         this.skillLevel = skillLevel;
     }
 
-<<<<<<< HEAD
     public Position getPosition() {
         return position;
     }
@@ -130,8 +120,6 @@ public class User {
         this.position = position;
     }
 
-=======
->>>>>>> f43f156 (phase 2 done, frontend set up and authentication)
     public Instant getCreatedAt() {
         return createdAt;
     }
