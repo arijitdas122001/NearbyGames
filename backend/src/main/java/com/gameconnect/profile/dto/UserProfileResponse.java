@@ -1,17 +1,19 @@
-package com.gameconnect.auth.dto;
+package com.gameconnect.profile.dto;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import com.gameconnect.auth.entity.User.Position;
 import com.gameconnect.auth.entity.User.SkillLevel;
 
-public record UserResponse(
+public record UserProfileResponse(
         UUID id,
-        String email,
         String displayName,
         String bio,
         String profileImageUrl,
         SkillLevel skillLevel,
-        Position position
+        Position position,
+        Instant createdAt,
+        PlayerStatsResponse stats
 ) {
 }

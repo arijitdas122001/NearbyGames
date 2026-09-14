@@ -42,6 +42,18 @@ class FlywaySchemaTest {
     }
 
     @Test
+    void positionColumnExistsOnAppUser() {
+        var columns = jdbcTemplate.queryForList(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'app_user'
+                """,
+                String.class);
+        assertThat(columns).contains("position");
+    }
+
+    @Test
     void uniqueAndCheckConstraintsArePresent() {
         List<String> constraints = jdbcTemplate.queryForList(
                 """
@@ -59,6 +71,7 @@ class FlywaySchemaTest {
                 "uq_rating",
                 "ck_game_status",
                 "ck_rating_score",
-                "ck_rating_self");
+                "ck_rating_self",
+                "ck_app_user_position");
     }
 }

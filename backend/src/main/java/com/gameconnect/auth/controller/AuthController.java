@@ -84,7 +84,8 @@ public class AuthController {
                 user.getDisplayName(),
                 user.getBio(),
                 user.getProfileImageUrl(),
-                user.getSkillLevel());
+                user.getSkillLevel(),
+                user.getPosition());
 
         return ResponseEntity.ok(response);
     }

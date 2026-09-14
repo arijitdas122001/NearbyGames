@@ -19,6 +19,10 @@ public class User {
         BEGINNER, INTERMEDIATE, ADVANCED
     }
 
+    public enum Position {
+        GOALKEEPER, DEFENDER, MIDFIELDER, WINGER, STRIKER, FLEXIBLE
+    }
+
     @Id
     private UUID id;
 
@@ -40,6 +44,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "skill_level", nullable = false, length = 20)
     private SkillLevel skillLevel = SkillLevel.BEGINNER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position", length = 20)
+    private Position position;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -105,6 +113,14 @@ public class User {
 
     public void setSkillLevel(SkillLevel skillLevel) {
         this.skillLevel = skillLevel;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
     }
 
     public Instant getCreatedAt() {
