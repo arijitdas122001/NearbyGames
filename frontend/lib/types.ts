@@ -47,6 +47,22 @@ export interface Game {
 
 export type GameSummary = Game;
 
+export interface CreateGameInput {
+  turfName: string;
+  turfAddress: string;
+  latitude: number;
+  longitude: number;
+  gameDate: string;
+  startTime: string;
+  endTime: string;
+  format: GameFormat;
+  skillLevel: SkillLevel;
+  maximumPlayers: number;
+  requiredPlayers: number | null;
+  joiningFee: number | null;
+  description: string | null;
+}
+
 export interface GameParticipant {
   id: string;
   gameId: string;

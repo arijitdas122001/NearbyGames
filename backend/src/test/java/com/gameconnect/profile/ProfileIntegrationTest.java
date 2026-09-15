@@ -217,7 +217,7 @@ class ProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"skillLevel\": \"PROFESSIONAL\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.code").value("MALFORMED_BODY"));
     }
 
     @Test
@@ -229,7 +229,7 @@ class ProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"position\": \"COACH\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.code").value("MALFORMED_BODY"));
     }
 
     @Test
