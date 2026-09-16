@@ -6,7 +6,7 @@ next-env.d.ts
 
 # Java / Gradle / backend
 backend/build/
-backend/.gradle/
+**/.gradle/
 *.class
 
 # Environment / secrets

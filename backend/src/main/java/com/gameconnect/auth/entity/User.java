@@ -47,8 +47,11 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "position", length = 20)
+    private Position position;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
     @PrePersist
     protected void onCreate() {
         if (id == null) {
