@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_game_status_start ON game (status, start_time);

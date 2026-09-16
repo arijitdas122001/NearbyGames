@@ -45,7 +45,69 @@ export interface Game {
   createdAt: string;
 }
 
-export type GameSummary = Game;
+export type GameSummary = {
+  id: string;
+  turfName: string;
+  turfAddress: string;
+  gameDate: string;
+  startTime: string;
+  endTime: string;
+  format: GameFormat;
+  skillLevel: SkillLevel;
+  maximumPlayers: number;
+  currentPlayers: number;
+  spotsRemaining: number;
+  joiningFee: number | null;
+  status: GameStatus;
+};
+
+export interface OwnerSummary {
+  id: string;
+  displayName: string;
+  profileImageUrl: string | null;
+  skillLevel: SkillLevel;
+}
+
+export interface GameDetail {
+  id: string;
+  owner: OwnerSummary;
+  turfName: string;
+  turfAddress: string;
+  latitude: number;
+  longitude: number;
+  gameDate: string;
+  startTime: string;
+  endTime: string;
+  format: GameFormat;
+  skillLevel: SkillLevel;
+  maximumPlayers: number;
+  requiredPlayers: number | null;
+  currentPlayers: number;
+  spotsRemaining: number;
+  joiningFee: number | null;
+  description: string | null;
+  status: GameStatus;
+  createdAt: string;
+}
+
+export interface PagedGames {
+  content: GameSummary[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface GameListQuery {
+  page?: number;
+  size?: number;
+  date?: string;
+  format?: GameFormat;
+  skillLevel?: SkillLevel;
+  q?: string;
+}
 
 export interface CreateGameInput {
   turfName: string;
