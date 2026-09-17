@@ -14,6 +14,8 @@ public interface MatchParticipantRepository extends JpaRepository<MatchParticipa
 
     long countByGameId(UUID gameId);
 
+    boolean existsByGameIdAndUserId(UUID gameId, UUID userId);
+
     List<MatchParticipant> findByGameId(UUID gameId);
 
     @Query("""
