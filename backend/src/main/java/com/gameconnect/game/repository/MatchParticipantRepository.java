@@ -2,6 +2,7 @@ package com.gameconnect.game.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,12 @@ public interface MatchParticipantRepository extends JpaRepository<MatchParticipa
     boolean existsByGameIdAndUserId(UUID gameId, UUID userId);
 
     List<MatchParticipant> findByGameId(UUID gameId);
+
+    List<MatchParticipant> findByGameIdOrderByJoinedAtAsc(UUID gameId);
+
+    Optional<MatchParticipant> findByGameIdAndUserId(UUID gameId, UUID userId);
+
+    Optional<MatchParticipant> findByIdAndGameId(UUID id, UUID gameId);
 
     @Query("""
             SELECT mp.gameId AS gameId, COUNT(mp) AS participantCount

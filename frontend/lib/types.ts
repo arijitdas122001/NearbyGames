@@ -8,6 +8,16 @@ export type RequestStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED";
 
 export type ParticipantRole = "PLAYER" | "OWNER";
 
+export type Position =
+  | "GOALKEEPER"
+  | "DEFENDER"
+  | "MIDFIELDER"
+  | "WINGER"
+  | "STRIKER"
+  | "FLEXIBLE";
+
+export type JoinDecision = "ACCEPT" | "REJECT";
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -88,6 +98,24 @@ export interface GameDetail {
   description: string | null;
   status: GameStatus;
   createdAt: string;
+  myParticipation: ParticipationSummary | null;
+}
+
+export interface ParticipationSummary {
+  participantId: string;
+  role: ParticipantRole;
+  attended: boolean | null;
+}
+
+export interface ParticipantDetail {
+  participantId: string;
+  userId: string;
+  displayName: string | null;
+  profileImageUrl: string | null;
+  skillLevel: SkillLevel | null;
+  role: ParticipantRole;
+  attended: boolean | null;
+  joinedAt: string;
 }
 
 export interface PagedGames {
@@ -141,6 +169,24 @@ export interface JoinRequest {
   status: RequestStatus;
   createdAt: string;
   decidedAt: string | null;
+}
+
+export interface ApplicantSummary {
+  userId: string;
+  displayName: string | null;
+  profileImageUrl: string | null;
+  skillLevel: SkillLevel | null;
+  position: Position | null;
+  stats: PlayerStats | null;
+}
+
+export interface JoinRequestDetail {
+  id: string;
+  gameId: string;
+  status: RequestStatus;
+  createdAt: string;
+  decidedAt: string | null;
+  applicant: ApplicantSummary;
 }
 
 export interface PlayerRating {

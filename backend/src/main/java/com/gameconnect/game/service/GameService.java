@@ -24,6 +24,7 @@ import com.gameconnect.game.dto.GameResponse;
 import com.gameconnect.game.dto.GameSummaryResponse;
 import com.gameconnect.game.dto.OwnerSummary;
 import com.gameconnect.game.dto.PagedGamesResponse;
+import com.gameconnect.game.dto.ParticipantSummary;
 import com.gameconnect.game.entity.Game;
 import com.gameconnect.game.entity.Game.GameFormat;
 import com.gameconnect.game.entity.Game.GameStatus;
@@ -191,7 +192,7 @@ public class GameService {
     }
 
     @Transactional(readOnly = true)
-    public GameDetailResponse getGameDetail(UUID gameId) {
+    public GameDetailResponse getGameDetail(UUID gameId, UUID viewerId) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new BusinessException(
                         HttpStatus.NOT_FOUND,
@@ -208,6 +209,11 @@ public class GameService {
 
         long currentPlayers = matchParticipantRepository.countByGameId(gameId);
         int spotsRemaining = Math.max(0, game.getMaximumPlayers() - (int) currentPlayers);
+
+        ParticipantSummary myParticipation = matchParticipantRepository
+                .findByGameIdAndUserId(gameId, viewerId)
+                .map(p -> new ParticipantSummary(p.getId(), p.getRole(), p.getAttended()))
+                .orElse(null);
 
         return new GameDetailResponse(
                 game.getId(),
@@ -228,7 +234,8 @@ public class GameService {
                 game.getJoiningFee(),
                 game.getDescription(),
                 game.getStatus(),
-                game.getCreatedAt());
+                game.getCreatedAt(),
+                myParticipation);
     }
 
     private Map<UUID, Long> countParticipants(List<Game> games) {

@@ -4,10 +4,15 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { AttendancePanel } from "@/components/games/AttendancePanel";
+import { GameStatusBadge } from "@/components/games/GameStatusBadge";
+import { JoinRequestAction } from "@/components/games/JoinRequestAction";
+import { JoinRequestsPanel } from "@/components/games/JoinRequestsPanel";
 import { ApiError } from "@/lib/api/client";
 import { fetchGame } from "@/lib/api/games";
+import { useAuth } from "@/lib/auth-context";
 import { formatIST, formatISTDate, formatISTTime } from "@/lib/format";
-import type { GameDetail, SkillLevel } from "@/lib/types";
+import type { GameDetail, GameStatus, SkillLevel } from "@/lib/types";
 
 const SKILL_LABELS: Record<SkillLevel, string> = {
   BEGINNER: "Beginner",
@@ -24,12 +29,40 @@ function initials(name: string): string {
     .join("");
 }
 
+function AttendanceStatusNote({
+  attended,
+  status,
+}: {
+  attended: boolean | null;
+  status: GameStatus;
+}) {
+  const content =
+    attended === true
+      ? { label: "You attended this game.", style: "text-emerald-700" }
+      : attended === false
+        ? { label: "You were marked absent for this game.", style: "text-rose-700" }
+        : { label: "Your attendance has not been marked yet.", style: "text-zinc-500" };
+
+  return (
+    <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4">
+      <h2 className="text-sm font-semibold text-zinc-900">Your attendance</h2>
+      <p className={`mt-1 text-sm ${content.style}`}>{content.label}</p>
+      {attended === null && status === "COMPLETED" && (
+        <p className="mt-1 text-xs text-zinc-400">
+          Attendance is closed because the game has completed.
+        </p>
+      )}
+    </section>
+  );
+}
+
 export default function GameDetailPage() {
   const params = useParams<{ id: string }>();
   return <GameDetail id={params.id} key={params.id} />;
 }
 
 function GameDetail({ id }: { id: string }) {
+  const { user } = useAuth();
   const [game, setGame] = useState<GameDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -60,6 +93,14 @@ function GameDetail({ id }: { id: string }) {
       cancelled = true;
     };
   }, [id]);
+
+  function refreshGame() {
+    fetchGame(id)
+      .then((g) => setGame(g))
+      .catch(() => {
+        // Keep the current view; the backend stays authoritative on next load.
+      });
+  }
 
   if (loading) {
     return (
@@ -123,9 +164,12 @@ function GameDetail({ id }: { id: string }) {
             </h1>
             <p className="mt-0.5 text-sm text-zinc-500">{game.turfAddress}</p>
           </div>
-          <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-            {game.format}
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <GameStatusBadge status={game.status} />
+            <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+              {game.format}
+            </span>
+          </div>
         </div>
         <p className="mt-2 text-sm text-zinc-600">{formatIST(game.startTime)}</p>
       </section>
@@ -155,6 +199,32 @@ function GameDetail({ id }: { id: string }) {
           </span>
         </div>
       </section>
+
+      {user != null && user.id === game.owner.id ? (
+        <>
+          <JoinRequestsPanel gameId={id} onRequestDecided={refreshGame} />
+          <AttendancePanel
+            gameId={id}
+            onAttendanceChanged={refreshGame}
+          />
+        </>
+      ) : (
+        <JoinRequestAction
+          gameId={id}
+          isAuthenticated={user != null}
+          isOwner={user != null && user.id === game.owner.id}
+          status={game.status}
+          spotsRemaining={game.spotsRemaining}
+        />
+      )}
+      {user != null &&
+        user.id !== game.owner.id &&
+        game.myParticipation != null && (
+          <AttendanceStatusNote
+            attended={game.myParticipation.attended}
+            status={game.status}
+          />
+        )}
 
       <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-zinc-900">Details</h2>

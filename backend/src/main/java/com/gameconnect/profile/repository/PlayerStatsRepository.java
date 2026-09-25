@@ -22,8 +22,8 @@ public class PlayerStatsRepository {
     public ParticipationStats findParticipationStats(UUID userId) {
         return jdbcTemplate.queryForObject("""
                 SELECT
-                    COUNT(DISTINCT CASE WHEN g.status = 'COMPLETED' THEN mp.game_id END) AS matches_played,
-                    COUNT(DISTINCT CASE WHEN g.status = 'COMPLETED' THEN mp.game_id END) AS matches_completed,
+                    COUNT(DISTINCT CASE WHEN g.status = 'COMPLETED' AND mp.attended = TRUE THEN mp.game_id END) AS matches_played,
+                    COUNT(DISTINCT CASE WHEN g.status = 'COMPLETED' AND mp.attended = TRUE THEN mp.game_id END) AS matches_completed,
                     CASE
                         WHEN COUNT(DISTINCT CASE WHEN g.status = 'COMPLETED' THEN mp.game_id END) = 0 THEN NULL
                         ELSE CAST(

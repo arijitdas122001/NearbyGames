@@ -62,6 +62,6 @@ public class GameController {
     public ResponseEntity<GameDetailResponse> getGame(
             @PathVariable UUID id,
             @AuthenticationPrincipal AuthenticatedUser principal) {
-        return ResponseEntity.ok(gameService.getGameDetail(id));
+        return ResponseEntity.ok(gameService.getGameDetail(id, principal.id()));
     }
 }

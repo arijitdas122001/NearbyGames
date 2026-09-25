@@ -2,6 +2,8 @@ package com.gameconnect.game.repository;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,4 +49,6 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
                                   @Param("skill") SkillLevel skill,
                                   @Param("q") String q,
                                   Pageable pageable);
+
+    List<Game> findByStatusInAndEndTimeBefore(Collection<GameStatus> statuses, Instant endTimeBefore);
 }

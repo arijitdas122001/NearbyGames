@@ -28,6 +28,7 @@ public record GameDetailResponse(
         Integer joiningFee,
         String description,
         GameStatus status,
-        Instant createdAt
+        Instant createdAt,
+        ParticipantSummary myParticipation
 ) {
 }
