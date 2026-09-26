@@ -20,12 +20,13 @@ export type JoinDecision = "ACCEPT" | "REJECT";
 
 export interface UserProfile {
   id: string;
-  email: string;
   displayName: string;
   bio: string | null;
   profileImageUrl: string | null;
   skillLevel: SkillLevel;
+  position: Position | null;
   createdAt: string;
+  stats: PlayerStats;
 }
 
 export interface PlayerStats {
@@ -33,6 +34,7 @@ export interface PlayerStats {
   matchesCompleted: number;
   attendanceRate: number | null;
   averageRating: number | null;
+  ratingCount: number;
 }
 
 export interface Game {
@@ -192,8 +194,19 @@ export interface JoinRequestDetail {
 export interface PlayerRating {
   id: string;
   gameId: string;
-  raterId: string;
-  rateeId: string;
+  ratedPlayerId: string;
   score: number;
   createdAt: string;
+}
+
+export interface RateablePlayer {
+  userId: string;
+  displayName: string;
+  profileImageUrl: string | null;
+  myRating: number | null;
+}
+
+export interface GameRatings {
+  gameId: string;
+  players: RateablePlayer[];
 }

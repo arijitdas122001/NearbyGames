@@ -42,13 +42,38 @@ public class PlayerStatsRepository {
                 userId);
     }
 
-    public Double findAverageRating(UUID userId) {
-        return jdbcTemplate.queryForObject(
-                "SELECT AVG(pr.score) FROM player_rating pr WHERE pr.ratee_id = ?",
-                Double.class,
+    public RatingStats findRatingStats(UUID userId) {
+        return jdbcTemplate.queryForObject("""
+                SELECT
+                    AVG(pr.score) AS average_rating,
+                    COUNT(*) AS rating_count
+                FROM player_rating pr
+                JOIN game g
+                  ON g.id = pr.game_id
+                JOIN match_participant mp_rater
+                  ON mp_rater.game_id = pr.game_id
+                 AND mp_rater.user_id = pr.rater_id
+                 AND mp_rater.attended = TRUE
+                JOIN match_participant mp_ratee
+                  ON mp_ratee.game_id = pr.game_id
+                 AND mp_ratee.user_id = pr.ratee_id
+                 AND mp_ratee.attended = TRUE
+                WHERE pr.ratee_id = ?
+                  AND g.status = 'COMPLETED'
+                """,
+                (rs, rowNum) -> {
+                    Object averageValue = rs.getObject("average_rating");
+                    Double averageRating = averageValue == null
+                            ? null
+                            : ((Number) averageValue).doubleValue();
+                    return new RatingStats(averageRating, rs.getLong("rating_count"));
+                },
                 userId);
     }
 
     public record ParticipationStats(int matchesPlayed, int matchesCompleted, Double attendanceRate) {
+    }
+
+    public record RatingStats(Double averageRating, long ratingCount) {
     }
 }

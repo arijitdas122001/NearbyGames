@@ -11,18 +11,17 @@ import com.gameconnect.common.exception.BusinessException;
 import com.gameconnect.profile.dto.PlayerStatsResponse;
 import com.gameconnect.profile.dto.UpdateProfileRequest;
 import com.gameconnect.profile.dto.UserProfileResponse;
-import com.gameconnect.profile.repository.PlayerStatsRepository;
 
 @Service
 public class ProfileService {
 
     private final UserRepository userRepository;
-    private final PlayerStatsRepository playerStatsRepository;
+    private final PlayerStatsService playerStatsService;
 
     public ProfileService(UserRepository userRepository,
-                          PlayerStatsRepository playerStatsRepository) {
+                          PlayerStatsService playerStatsService) {
         this.userRepository = userRepository;
-        this.playerStatsRepository = playerStatsRepository;
+        this.playerStatsService = playerStatsService;
     }
 
     public UserProfileResponse getProfile(UUID userId) {
@@ -79,14 +78,7 @@ public class ProfileService {
     }
 
     private PlayerStatsResponse computeStats(UUID userId) {
-        PlayerStatsRepository.ParticipationStats participation =
-                playerStatsRepository.findParticipationStats(userId);
-        Double averageRating = playerStatsRepository.findAverageRating(userId);
-        return new PlayerStatsResponse(
-                participation.matchesPlayed(),
-                participation.matchesCompleted(),
-                participation.attendanceRate(),
-                averageRating);
+        return playerStatsService.getStats(userId);
     }
 
     private UserProfileResponse toResponse(User user, PlayerStatsResponse stats) {

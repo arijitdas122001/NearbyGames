@@ -4,6 +4,7 @@ public record PlayerStatsResponse(
         int matchesPlayed,
         int matchesCompleted,
         Double attendanceRate,
-        Double averageRating
+        Double averageRating,
+        long ratingCount
 ) {
 }

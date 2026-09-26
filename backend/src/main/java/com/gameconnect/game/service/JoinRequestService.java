@@ -25,7 +25,7 @@ import com.gameconnect.game.repository.GameRepository;
 import com.gameconnect.game.repository.JoinRequestRepository;
 import com.gameconnect.game.repository.MatchParticipantRepository;
 import com.gameconnect.profile.dto.PlayerStatsResponse;
-import com.gameconnect.profile.repository.PlayerStatsRepository;
+import com.gameconnect.profile.service.PlayerStatsService;
 import com.gameconnect.security.JwtAuthenticationFilter.AuthenticatedUser;
 
 @Service
@@ -35,18 +35,18 @@ public class JoinRequestService {
     private final GameRepository gameRepository;
     private final MatchParticipantRepository matchParticipantRepository;
     private final UserRepository userRepository;
-    private final PlayerStatsRepository playerStatsRepository;
+    private final PlayerStatsService playerStatsService;
 
     public JoinRequestService(JoinRequestRepository joinRequestRepository,
                               GameRepository gameRepository,
                               MatchParticipantRepository matchParticipantRepository,
                               UserRepository userRepository,
-                              PlayerStatsRepository playerStatsRepository) {
+                              PlayerStatsService playerStatsService) {
         this.joinRequestRepository = joinRequestRepository;
         this.gameRepository = gameRepository;
         this.matchParticipantRepository = matchParticipantRepository;
         this.userRepository = userRepository;
-        this.playerStatsRepository = playerStatsRepository;
+        this.playerStatsService = playerStatsService;
     }
 
     @Transactional
@@ -253,14 +253,7 @@ public class JoinRequestService {
         User user = userRepository.findById(userId).orElse(null);
         PlayerStatsResponse stats = null;
         if (user != null) {
-            PlayerStatsRepository.ParticipationStats participation =
-                    playerStatsRepository.findParticipationStats(userId);
-            Double averageRating = playerStatsRepository.findAverageRating(userId);
-            stats = new PlayerStatsResponse(
-                    participation.matchesPlayed(),
-                    participation.matchesCompleted(),
-                    participation.attendanceRate(),
-                    averageRating);
+            stats = playerStatsService.getStats(userId);
         }
         return new ApplicantSummary(
                 userId,

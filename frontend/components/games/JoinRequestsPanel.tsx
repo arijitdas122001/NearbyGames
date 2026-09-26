@@ -11,6 +11,7 @@ import { formatIST } from "@/lib/format";
 import type {
   JoinDecision,
   JoinRequestDetail,
+  PlayerStats,
   Position,
   SkillLevel,
 } from "@/lib/types";
@@ -52,6 +53,15 @@ function initials(name: string | null): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function ratingSummary(stats: PlayerStats | null | undefined): string {
+  if (!stats) return "Rating: —";
+  if (stats.averageRating == null) {
+    return stats.ratingCount === 0 ? "Rating: No ratings yet" : "Rating: —";
+  }
+
+  return `Rating: ${stats.averageRating.toFixed(1)} ★ · ${stats.ratingCount} rating${stats.ratingCount === 1 ? "" : "s"}`;
 }
 
 interface JoinRequestsPanelProps {
@@ -223,9 +233,7 @@ export function JoinRequestsPanel({
                     <div>
                       <dt className="sr-only">Rating</dt>
                       <dd>
-                        {request.applicant.stats?.averageRating != null
-                          ? `Rating: ${request.applicant.stats.averageRating.toFixed(1)}`
-                          : "Rating: —"}
+                        {ratingSummary(request.applicant.stats)}
                       </dd>
                     </div>
                   </dl>

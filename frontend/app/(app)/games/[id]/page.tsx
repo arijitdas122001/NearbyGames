@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AttendancePanel } from "@/components/games/AttendancePanel";
+import { GameRatingPanel } from "@/components/games/GameRatingPanel";
 import { GameStatusBadge } from "@/components/games/GameStatusBadge";
 import { JoinRequestAction } from "@/components/games/JoinRequestAction";
 import { JoinRequestsPanel } from "@/components/games/JoinRequestsPanel";
@@ -224,6 +225,12 @@ function GameDetail({ id }: { id: string }) {
             attended={game.myParticipation.attended}
             status={game.status}
           />
+      )}
+
+      {user != null &&
+        game.status === "COMPLETED" &&
+        game.myParticipation?.attended === true && (
+          <GameRatingPanel gameId={id} />
         )}
 
       <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4">

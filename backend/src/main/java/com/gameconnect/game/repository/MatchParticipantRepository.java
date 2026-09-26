@@ -21,6 +21,8 @@ public interface MatchParticipantRepository extends JpaRepository<MatchParticipa
 
     List<MatchParticipant> findByGameIdOrderByJoinedAtAsc(UUID gameId);
 
+    List<MatchParticipant> findByGameIdAndAttendedTrueOrderByJoinedAtAsc(UUID gameId);
+
     Optional<MatchParticipant> findByGameIdAndUserId(UUID gameId, UUID userId);
 
     Optional<MatchParticipant> findByIdAndGameId(UUID id, UUID gameId);
