@@ -50,5 +50,34 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
                                   @Param("q") String q,
                                   Pageable pageable);
 
+    /**
+     * Games the user is involved in, regardless of lifecycle stage. The owner
+     * branch is a defensive fallback: {@code GameService.createGame} already
+     * writes an {@code OWNER} match_participant row, so normally the
+     * {@code EXISTS} subquery already matches.
+     *
+     * <p>The participant check is an {@code EXISTS} subquery rather than a
+     * join, so the {@code game} row is never multiplied and an owner who is
+     * also a participant can never produce a duplicate result.
+     *
+     * <p>Ordering is supplied via {@code pageable} so each category can use a
+     * different sort; callers must always include the unique id as the final
+     * tiebreaker to guarantee a deterministic total order. {@code statuses}
+     * must never be null — pass the full set of statuses to express "no
+     * lifecycle filter".
+     */
+    @Query("""
+            SELECT g FROM Game g
+            WHERE (g.ownerId = :userId
+                   OR EXISTS (
+                        SELECT mp.id FROM MatchParticipant mp
+                        WHERE mp.gameId = g.id AND mp.userId = :userId
+                   ))
+              AND g.status IN :statuses
+            """)
+    Page<Game> findMyGames(@Param("userId") UUID userId,
+                           @Param("statuses") Collection<GameStatus> statuses,
+                           Pageable pageable);
+
     List<Game> findByStatusInAndEndTimeBefore(Collection<GameStatus> statuses, Instant endTimeBefore);
 }

@@ -19,8 +19,11 @@ import com.gameconnect.auth.entity.User.SkillLevel;
 import com.gameconnect.game.dto.CreateGameRequest;
 import com.gameconnect.game.dto.GameDetailResponse;
 import com.gameconnect.game.dto.GameResponse;
+import com.gameconnect.game.dto.MyGameCategory;
 import com.gameconnect.game.dto.PagedGamesResponse;
+import com.gameconnect.game.dto.PagedMyGamesResponse;
 import com.gameconnect.game.service.GameService;
+import com.gameconnect.game.service.MyGamesService;
 import com.gameconnect.security.JwtAuthenticationFilter.AuthenticatedUser;
 
 import jakarta.validation.Valid;
@@ -30,9 +33,11 @@ import jakarta.validation.Valid;
 public class GameController {
 
     private final GameService gameService;
+    private final MyGamesService myGamesService;
 
-    public GameController(GameService gameService) {
+    public GameController(GameService gameService, MyGamesService myGamesService) {
         this.gameService = gameService;
+        this.myGamesService = myGamesService;
     }
 
     @PostMapping
@@ -63,5 +68,19 @@ public class GameController {
             @PathVariable UUID id,
             @AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(gameService.getGameDetail(id, principal.id()));
+    }
+
+    /**
+     * "My Games": games the authenticated user is involved in, across the whole
+     * lifecycle. Spring ranks this literal path above the {@code /{id}} variable
+     * pattern, so "my" is never parsed as a UUID.
+     */
+    @GetMapping("/my")
+    public ResponseEntity<PagedMyGamesResponse> listMyGames(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) MyGameCategory category,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        return ResponseEntity.ok(myGamesService.listMyGames(principal, page, size, category));
     }
 }

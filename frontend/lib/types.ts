@@ -8,6 +8,18 @@ export type RequestStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED";
 
 export type ParticipantRole = "PLAYER" | "OWNER";
 
+/**
+ * User-facing bucket for a game in "My Games". Mirrors the backend
+ * MyGameCategory; derived from GameStatus so the tabs can never disagree with
+ * the game lifecycle.
+ */
+export type MyGameCategory =
+  | "UPCOMING"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "ALL";
+
 export type Position =
   | "GOALKEEPER"
   | "DEFENDER"
@@ -137,6 +149,34 @@ export interface GameListQuery {
   format?: GameFormat;
   skillLevel?: SkillLevel;
   q?: string;
+}
+
+/**
+ * A game the authenticated user is involved in, plus the viewer's own
+ * participation context. `myRole` and `canRate` are resolved server-side so the
+ * list never needs a follow-up request to decide what to render.
+ */
+export type MyGameSummary = GameSummary & {
+  category: MyGameCategory;
+  myRole: ParticipantRole;
+  myAttended: boolean | null;
+  canRate: boolean;
+};
+
+export interface PagedMyGames {
+  content: MyGameSummary[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface MyGamesQuery {
+  page?: number;
+  size?: number;
+  category?: MyGameCategory;
 }
 
 export interface CreateGameInput {

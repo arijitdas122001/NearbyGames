@@ -27,6 +27,12 @@ public interface MatchParticipantRepository extends JpaRepository<MatchParticipa
 
     Optional<MatchParticipant> findByIdAndGameId(UUID id, UUID gameId);
 
+    /**
+     * Batched lookup of one user's participation rows for a page of games.
+     * Avoids an N+1 query when mapping a paged result set.
+     */
+    List<MatchParticipant> findByUserIdAndGameIdIn(UUID userId, Collection<UUID> gameIds);
+
     @Query("""
             SELECT mp.gameId AS gameId, COUNT(mp) AS participantCount
             FROM MatchParticipant mp

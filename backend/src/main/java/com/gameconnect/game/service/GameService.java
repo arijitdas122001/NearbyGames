@@ -28,8 +28,10 @@ import com.gameconnect.game.dto.ParticipantSummary;
 import com.gameconnect.game.entity.Game;
 import com.gameconnect.game.entity.Game.GameFormat;
 import com.gameconnect.game.entity.Game.GameStatus;
+import com.gameconnect.game.entity.JoinRequest.RequestStatus;
 import com.gameconnect.game.entity.MatchParticipant;
 import com.gameconnect.game.repository.GameRepository;
+import com.gameconnect.game.repository.JoinRequestRepository;
 import com.gameconnect.game.repository.MatchParticipantRepository;
 import com.gameconnect.security.JwtAuthenticationFilter.AuthenticatedUser;
 
@@ -42,13 +44,16 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final MatchParticipantRepository matchParticipantRepository;
+    private final JoinRequestRepository joinRequestRepository;
     private final UserRepository userRepository;
 
     public GameService(GameRepository gameRepository,
                        MatchParticipantRepository matchParticipantRepository,
+                       JoinRequestRepository joinRequestRepository,
                        UserRepository userRepository) {
         this.gameRepository = gameRepository;
         this.matchParticipantRepository = matchParticipantRepository;
+        this.joinRequestRepository = joinRequestRepository;
         this.userRepository = userRepository;
     }
 
@@ -199,6 +204,8 @@ public class GameService {
                         "GAME_NOT_FOUND",
                         "Game not found"));
 
+        assertCanView(game, viewerId);
+
         OwnerSummary owner = userRepository.findById(game.getOwnerId())
                 .map(u -> new OwnerSummary(
                         u.getId(),
@@ -236,6 +243,32 @@ public class GameService {
                 game.getStatus(),
                 game.getCreatedAt(),
                 myParticipation);
+    }
+
+    /**
+     * Browsable-game access rule.
+     *
+     * <p>OPEN and FULL games stay browsable by any authenticated user, because
+     * discovery depends on it. Once a game leaves that set (IN_PROGRESS,
+     * COMPLETED, CANCELLED) it is restricted to users legitimately associated
+     * with it: the owner, a match participant, or a user with a PENDING join
+     * request. Rejected and cancelled requesters, and unrelated users, are
+     * refused.
+     */
+    private void assertCanView(Game game, UUID viewerId) {
+        if (game.getStatus() == GameStatus.OPEN || game.getStatus() == GameStatus.FULL) {
+            return;
+        }
+        if (game.getOwnerId().equals(viewerId)
+                || matchParticipantRepository.existsByGameIdAndUserId(game.getId(), viewerId)
+                || joinRequestRepository.existsByGameIdAndUserIdAndStatus(
+                        game.getId(), viewerId, RequestStatus.PENDING)) {
+            return;
+        }
+        throw new BusinessException(
+                HttpStatus.FORBIDDEN,
+                "GAME_ACCESS_DENIED",
+                "You do not have access to this game");
     }
 
     private Map<UUID, Long> countParticipants(List<Game> games) {

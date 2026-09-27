@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 
 import { AttendancePanel } from "@/components/games/AttendancePanel";
 import { GameRatingPanel } from "@/components/games/GameRatingPanel";
@@ -14,6 +14,8 @@ import { fetchGame } from "@/lib/api/games";
 import { useAuth } from "@/lib/auth-context";
 import { formatIST, formatISTDate, formatISTTime } from "@/lib/format";
 import type { GameDetail, GameStatus, SkillLevel } from "@/lib/types";
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 const SKILL_LABELS: Record<SkillLevel, string> = {
   BEGINNER: "Beginner",
@@ -57,12 +59,72 @@ function AttendanceStatusNote({
   );
 }
 
-export default function GameDetailPage() {
-  const params = useParams<{ id: string }>();
-  return <GameDetail id={params.id} key={params.id} />;
+const BACK_LINK_CLASS = "text-sm font-medium text-emerald-700";
+
+/**
+ * Sends the user back to the list they actually came from. "My Games" marks its
+ * links with ?from=my-games; everything else returns to discovery.
+ */
+function OriginBackLink({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = use(searchParams);
+  const from = Array.isArray(params.from) ? params.from[0] : params.from;
+  const isMyGames = from === "my-games";
+
+  return (
+    <Link
+      href={isMyGames ? "/my-games" : "/games"}
+      className={BACK_LINK_CLASS}
+    >
+      {isMyGames ? "← My Games" : "← Back to games"}
+    </Link>
+  );
 }
 
-function GameDetail({ id }: { id: string }) {
+/**
+ * Reading search params forces a client-side bailout during prerender, so the
+ * boundary is kept as tight as possible around the link alone. The fallback is
+ * the discovery default, which keeps the page usable before hydration.
+ */
+function BackLink({ searchParams }: { searchParams: SearchParams }) {
+  return (
+    <Suspense
+      fallback={
+        <Link href="/games" className={BACK_LINK_CLASS}>
+          ← Back to games
+        </Link>
+      }
+    >
+      <OriginBackLink searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+export default function GameDetailPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = useParams<{ id: string }>();
+  return (
+    <GameDetail
+      id={params.id}
+      key={params.id}
+      searchParams={searchParams}
+    />
+  );
+}
+
+function GameDetail({
+  id,
+  searchParams,
+}: {
+  id: string;
+  searchParams: SearchParams;
+}) {
   const { user } = useAuth();
   const [game, setGame] = useState<GameDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,12 +180,9 @@ function GameDetail({ id }: { id: string }) {
         <p className="mt-2 text-sm text-zinc-600">
           This game may have been removed.
         </p>
-        <Link
-          href="/games"
-          className="mt-4 inline-block text-sm font-medium text-emerald-700"
-        >
-          ← Back to games
-        </Link>
+        <div className="mt-4">
+          <BackLink searchParams={searchParams} />
+        </div>
       </div>
     );
   }
@@ -134,12 +193,9 @@ function GameDetail({ id }: { id: string }) {
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
-        <Link
-          href="/games"
-          className="mt-4 inline-block text-sm font-medium text-emerald-700"
-        >
-          ← Back to games
-        </Link>
+        <div className="mt-4">
+          <BackLink searchParams={searchParams} />
+        </div>
       </div>
     );
   }
@@ -153,9 +209,7 @@ function GameDetail({ id }: { id: string }) {
 
   return (
     <div className="p-4">
-      <Link href="/games" className="text-sm font-medium text-emerald-700">
-        ← Back to games
-      </Link>
+      <BackLink searchParams={searchParams} />
 
       <section className="mt-3">
         <div className="flex items-start justify-between gap-2">

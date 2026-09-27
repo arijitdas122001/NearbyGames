@@ -40,21 +40,25 @@ export function AttendancePanel({
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(() => {
-    getGameParticipants(gameId)
-      .then((list) => {
-        setParticipants(list);
+ const refresh = useCallback((clearError = true) => {
+  getGameParticipants(gameId)
+    .then((list) => {
+      setParticipants(list);
+
+      if (clearError) {
         setError(null);
-      })
-      .catch((err) => {
-        setParticipants([]);
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : "Could not load the roster.",
-        );
-      });
-  }, [gameId]);
+      }
+    })
+    .catch((err) => {
+      setParticipants([]);
+
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not load the roster.",
+      );
+    });
+}, [gameId]);
 
   useEffect(() => {
     refresh();
@@ -65,6 +69,7 @@ export function AttendancePanel({
   }
 
   async function handleMark(participant: ParticipantDetail, attended: boolean) {
+    console.log("in the attendance component")
     if (isSaving(participant.participantId)) return;
     setSaving((prev) => ({ ...prev, [participant.participantId]: true }));
     setError(null);
@@ -116,7 +121,8 @@ export function AttendancePanel({
       } else {
         setError("Something went wrong. Please try again.");
       }
-      refresh();
+      
+        refresh(false);
     } finally {
       setSaving((prev) => {
         const next = { ...prev };
