@@ -135,6 +135,15 @@ class GameCompletionIntegrationTest {
         matchParticipantRepository.save(participant);
     }
 
+    private void insertRating(UUID gameId, UUID raterId, UUID rateeId, int score) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO player_rating (game_id, rater_id, ratee_id, score)
+                VALUES (?, ?, ?, ?)
+                """,
+                gameId, raterId, rateeId, score);
+    }
+
     private GameStatus statusOf(UUID gameId) {
         return gameRepository.findById(gameId).orElseThrow().getStatus();
     }
@@ -322,5 +331,26 @@ class GameCompletionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stats.matchesPlayed").value(1))
                 .andExpect(jsonPath("$.stats.attendanceRate").value(1.0));
+    }
+
+    @Test
+    void stats_completedGame_rateeAverageAndCount() throws Exception {
+        AuthSession owner = registerAndAuth("rate-owner@example.com", "Rate Owner");
+        AuthSession rater = registerAndAuth("rate-rater@example.com", "Rate Rater");
+        AuthSession ratee = registerAndAuth("ratee@example.com", "Ratee");
+        UUID gameId = insertGame(owner.userId,
+                Instant.now().minus(9, ChronoUnit.HOURS),
+                Instant.now().minus(7, ChronoUnit.HOURS),
+                GameStatus.COMPLETED);
+        insertParticipant(gameId, owner.userId, MatchParticipant.Role.OWNER, true);
+        insertParticipant(gameId, rater.userId, MatchParticipant.Role.PLAYER, true);
+        insertParticipant(gameId, ratee.userId, MatchParticipant.Role.PLAYER, true);
+        insertRating(gameId, owner.userId, ratee.userId, 4);
+        insertRating(gameId, rater.userId, ratee.userId, 5);
+
+        mockMvc.perform(get("/api/users/me").cookie(authCookie(ratee.token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stats.averageRating").value(4.5))
+                .andExpect(jsonPath("$.stats.ratingCount").value(2));
     }
 }

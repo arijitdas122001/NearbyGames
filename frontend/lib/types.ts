@@ -49,6 +49,21 @@ export interface PlayerStats {
   ratingCount: number;
 }
 
+/**
+ * Editable profile fields. Mirrors the backend's UpdateProfileRequest for the
+ * subset the profile form exposes.
+ *
+ * `position` is deliberately absent: the profile shows it but does not edit it.
+ * Nullable fields are always sent as strings — the backend treats a JSON null as
+ * "leave this field unchanged", so an empty string is what actually clears them.
+ */
+export interface UpdateProfileInput {
+  displayName: string;
+  bio: string;
+  profileImageUrl: string;
+  skillLevel: SkillLevel;
+}
+
 export interface Game {
   id: string;
   ownerId: string;
