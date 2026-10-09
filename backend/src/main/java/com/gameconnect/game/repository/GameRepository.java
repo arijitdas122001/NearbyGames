@@ -40,7 +40,7 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
               AND (:q IS NULL
                   OR LOWER(g.turfName) LIKE :q
                   OR LOWER(g.turfAddress) LIKE :q)
-            ORDER BY g.startTime ASC
+            ORDER BY g.startTime ASC, g.id ASC
             """)
     Page<Game> findDiscoveryGames(@Param("status") GameStatus status,
                                   @Param("now") Instant now,
@@ -80,4 +80,12 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
                            Pageable pageable);
 
     List<Game> findByStatusInAndEndTimeBefore(Collection<GameStatus> statuses, Instant endTimeBefore);
+
+    /**
+     * Games that should already have kicked off but are still marked as
+     * accepting players. The scheduler uses this to flip OPEN/FULL games to
+     * IN_PROGRESS so that join/accept paths (which require {@code status =
+     * OPEN}) stop admitting players after kick-off.
+     */
+    List<Game> findByStatusInAndStartTimeBefore(Collection<GameStatus> statuses, Instant startTimeBefore);
 }

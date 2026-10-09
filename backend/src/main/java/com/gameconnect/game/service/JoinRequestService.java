@@ -2,6 +2,7 @@ package com.gameconnect.game.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -80,7 +81,10 @@ public class JoinRequestService {
                     "You are already a participant in this game");
         }
 
-        if (joinRequestRepository.existsByGameIdAndUserIdAndStatus(gameId, requester.id(), RequestStatus.PENDING)) {
+        JoinRequest existing = joinRequestRepository.findByGameIdAndUserId(gameId, requester.id())
+                .orElse(null);
+
+        if (existing != null && existing.getStatus() == RequestStatus.PENDING) {
             throw new BusinessException(
                     HttpStatus.CONFLICT,
                     "JOIN_REQUEST_EXISTS",
@@ -95,6 +99,15 @@ public class JoinRequestService {
                     "This game is already full");
         }
 
+        if (existing != null) {
+            // uq_req_game_user allows only one row per (game, user), so a
+            // rejected applicant re-requesting must reset the existing row
+            // rather than insert a new one.
+            existing.setStatus(RequestStatus.PENDING);
+            existing.setDecidedAt(null);
+            return toResponse(joinRequestRepository.saveAndFlush(existing));
+        }
+
         JoinRequest joinRequest = new JoinRequest();
         joinRequest.setGameId(gameId);
         joinRequest.setUserId(requester.id());
@@ -102,13 +115,28 @@ public class JoinRequestService {
         joinRequest.setDecidedAt(null);
 
         try {
-            return toResponse(joinRequestRepository.save(joinRequest));
+            return toResponse(joinRequestRepository.saveAndFlush(joinRequest));
         } catch (DataIntegrityViolationException ex) {
-            throw new BusinessException(
-                    HttpStatus.CONFLICT,
-                    "JOIN_REQUEST_EXISTS",
-                    "You already have a request for this game");
+            if (isUniqueRequestViolation(ex)) {
+                throw new BusinessException(
+                        HttpStatus.CONFLICT,
+                        "JOIN_REQUEST_EXISTS",
+                        "You already have a request for this game");
+            }
+            throw ex;
         }
+    }
+
+    private boolean isUniqueRequestViolation(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase(Locale.ROOT).contains("uq_req_game_user")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     @Transactional(readOnly = true)

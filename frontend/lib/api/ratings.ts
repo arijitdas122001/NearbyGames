@@ -3,7 +3,7 @@ import { apiFetch } from "./client";
 import type { GameRatings, PlayerRating } from "@/lib/types";
 
 const ratingPath = (gameId: string) =>
-  `/api/games/${encodeURIComponent(gameId)}/ratings`;
+  `/games/${encodeURIComponent(gameId)}/ratings`;
 
 export async function getEligibleGameRatings(
   gameId: string,
