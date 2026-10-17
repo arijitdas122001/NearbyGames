@@ -9,7 +9,12 @@ import { GameRatingPanel } from "@/components/games/GameRatingPanel";
 import { GameStatusBadge } from "@/components/games/GameStatusBadge";
 import { JoinRequestAction } from "@/components/games/JoinRequestAction";
 import { JoinRequestsPanel } from "@/components/games/JoinRequestsPanel";
-import { ApiError } from "@/lib/api/client";
+import { SessionExpiredNotice } from "@/components/layout/SessionExpiredNotice";
+import {
+  ApiError,
+  SESSION_EXPIRED_MESSAGE,
+  isSessionExpired,
+} from "@/lib/api/client";
 import { fetchGame } from "@/lib/api/games";
 import { useAuth } from "@/lib/auth-context";
 import { formatIST, formatISTDate, formatISTTime } from "@/lib/format";
@@ -143,9 +148,11 @@ function GameDetail({
           setNotFound(true);
         } else {
           setError(
-            err instanceof ApiError
-              ? err.message
-              : "An unexpected error occurred.",
+            isSessionExpired(err)
+              ? SESSION_EXPIRED_MESSAGE
+              : err instanceof ApiError
+                ? err.message
+                : "An unexpected error occurred.",
           );
         }
       })
@@ -190,9 +197,13 @@ function GameDetail({
   if (error) {
     return (
       <div className="p-4">
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        {error === SESSION_EXPIRED_MESSAGE ? (
+          <SessionExpiredNotice returnTo={`/games/${id}`} />
+        ) : (
+          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <div className="mt-4">
           <BackLink searchParams={searchParams} />
         </div>
@@ -257,9 +268,15 @@ function GameDetail({
 
       {user != null && user.id === game.owner.id ? (
         <>
-          <JoinRequestsPanel gameId={id} onRequestDecided={refreshGame} />
+          <JoinRequestsPanel
+            gameId={id}
+            status={game.status}
+            onRequestDecided={refreshGame}
+          />
           <AttendancePanel
             gameId={id}
+            status={game.status}
+            startTime={game.startTime}
             onAttendanceChanged={refreshGame}
           />
         </>

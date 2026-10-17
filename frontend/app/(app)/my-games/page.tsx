@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 
 import { MyGameCard } from "@/components/games/MyGameCard";
 import { MyGamesTabs } from "@/components/games/MyGamesTabs";
-import { ApiError } from "@/lib/api/client";
+import { SessionExpiredNotice } from "@/components/layout/SessionExpiredNotice";
+import {
+  ApiError,
+  SESSION_EXPIRED_MESSAGE,
+  isSessionExpired,
+} from "@/lib/api/client";
 import { listMyGames } from "@/lib/api/games";
 import type { MyGameCategory, MyGameSummary } from "@/lib/types";
 
@@ -66,9 +71,11 @@ export default function MyGamesPage() {
         setFirst(true);
         setLast(true);
         setError(
-          err instanceof ApiError
-            ? err.message
-            : "An unexpected error occurred.",
+          isSessionExpired(err)
+            ? SESSION_EXPIRED_MESSAGE
+            : err instanceof ApiError
+              ? err.message
+              : "An unexpected error occurred.",
         );
       })
       .finally(() => {
@@ -112,14 +119,16 @@ export default function MyGamesPage() {
         />
       </div>
 
-      {error && (
-        <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       {loading ? (
         <p className="mt-8 text-center text-sm text-zinc-500">Loading games…</p>
+      ) : error ? (
+        error === SESSION_EXPIRED_MESSAGE ? (
+          <SessionExpiredNotice returnTo="/my-games" />
+        ) : (
+          <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )
       ) : games.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-2 text-center text-zinc-500">
           <p className="text-sm">{empty.title}</p>

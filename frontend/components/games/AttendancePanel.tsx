@@ -7,7 +7,7 @@ import {
   getGameParticipants,
   setParticipantAttendance,
 } from "@/lib/api/participants";
-import type { ParticipantDetail, SkillLevel } from "@/lib/types";
+import type { GameStatus, ParticipantDetail, SkillLevel } from "@/lib/types";
 
 const SKILL_LABELS: Record<SkillLevel, string> = {
   BEGINNER: "Beginner",
@@ -27,11 +27,15 @@ function initials(name: string | null): string {
 
 interface AttendancePanelProps {
   gameId: string;
+  status: GameStatus;
+  startTime: string;
   onAttendanceChanged?: () => void;
 }
 
 export function AttendancePanel({
   gameId,
+  status,
+  startTime,
   onAttendanceChanged,
 }: AttendancePanelProps) {
   const [participants, setParticipants] = useState<ParticipantDetail[] | null>(
@@ -39,6 +43,9 @@ export function AttendancePanel({
   );
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  // Captured once when the panel mounts. Reading the clock during render is
+  // impure, so it is read here instead; the backend remains authoritative.
+  const [now] = useState(() => Date.now());
 
  const refresh = useCallback((clearError = true) => {
   getGameParticipants(gameId)
@@ -69,7 +76,6 @@ export function AttendancePanel({
   }
 
   async function handleMark(participant: ParticipantDetail, attended: boolean) {
-    console.log("in the attendance component")
     if (isSaving(participant.participantId)) return;
     setSaving((prev) => ({ ...prev, [participant.participantId]: true }));
     setError(null);
@@ -132,6 +138,24 @@ export function AttendancePanel({
     }
   }
 
+  // Mirrors AttendanceService.assertAttendable: attendance is markable only
+  // while the game is OPEN/FULL/IN_PROGRESS and at or after the start time.
+  // The backend stays authoritative; this just avoids offering actions that
+  // can only fail.
+  const lifecycleEligible =
+    status === "OPEN" || status === "FULL" || status === "IN_PROGRESS";
+  const started = now >= new Date(startTime).getTime();
+  const canMark = lifecycleEligible && started;
+
+  const blockedReason =
+    status === "COMPLETED"
+      ? "Attendance is closed — this game has completed."
+      : status === "CANCELLED"
+        ? "This game has been cancelled, so attendance can't be marked."
+        : !started
+          ? "Attendance can only be marked after the game starts."
+          : null;
+
   return (
     <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4">
       <div className="flex items-center justify-between">
@@ -147,6 +171,12 @@ export function AttendancePanel({
         <div className="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
+      )}
+
+      {blockedReason && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          {blockedReason}
+        </p>
       )}
 
       {participants === null ? (
@@ -193,7 +223,7 @@ export function AttendancePanel({
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
-                    disabled={isSaving(participant.participantId)}
+                    disabled={!canMark || isSaving(participant.participantId)}
                     onClick={() => void handleMark(participant, true)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                       participant.attended === true
@@ -205,7 +235,7 @@ export function AttendancePanel({
                   </button>
                   <button
                     type="button"
-                    disabled={isSaving(participant.participantId)}
+                    disabled={!canMark || isSaving(participant.participantId)}
                     onClick={() => void handleMark(participant, false)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                       participant.attended === false

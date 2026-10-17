@@ -1,11 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, safeReturnTo } from "@/lib/api/client";
 
+/**
+ * Session-expiry links use ?next=<path>; the param read is isolated in its own
+ * Suspense boundary so the rest of the page still prerenders, and the fallback
+ * behaves exactly like a direct visit.
+ */
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginForm />}>
+      <ReturningLogin />
+    </Suspense>
+  );
+}
+
+function ReturningLogin() {
+  const searchParams = useSearchParams();
+  return <LoginForm returnTo={safeReturnTo(searchParams.get("next"))} />;
+}
+
+function LoginForm({ returnTo }: { returnTo?: string }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +36,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(email, password, returnTo);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -53,7 +72,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm text-white placeholder-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               placeholder="you@example.com"
             />
           </div>

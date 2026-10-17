@@ -693,6 +693,66 @@ class MyGamesIntegrationTest {
                 .andExpect(jsonPath("$.code").value("RATING_ALREADY_EXISTS"));
     }
 
+    @Test
+    void myGames_selfRating_returns400SelfRatingNotAllowed() throws Exception {
+        AuthSession owner = registerAndAuth("rs-owner@example.com", "Rs Owner");
+        AuthSession rater = registerAndAuth("rs-rater@example.com", "Rs Rater");
+        UUID gameId = insertGame(owner.userId(), "Self Turf",
+                Instant.now().minus(9, ChronoUnit.HOURS),
+                Instant.now().minus(7, ChronoUnit.HOURS),
+                GameStatus.COMPLETED);
+        insertParticipant(gameId, owner.userId(), MatchParticipant.Role.OWNER, true);
+        insertParticipant(gameId, rater.userId(), MatchParticipant.Role.PLAYER, true);
+
+        mockMvc.perform(post("/api/games/{gameId}/ratings", gameId)
+                        .cookie(authCookie(rater.token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ratedPlayerId\":\"" + rater.userId() + "\",\"score\":5}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SELF_RATING_NOT_ALLOWED"));
+    }
+
+    @Test
+    void myGames_ratedPlayerNotParticipant_returns403RatedPlayerNotParticipant() throws Exception {
+        AuthSession owner = registerAndAuth("rp-owner@example.com", "Rp Owner");
+        AuthSession rater = registerAndAuth("rp-rater@example.com", "Rp Rater");
+        AuthSession outsider = registerAndAuth("rp-outsider@example.com", "Rp Outsider");
+        UUID gameId = insertGame(owner.userId(), "Rated Turf",
+                Instant.now().minus(9, ChronoUnit.HOURS),
+                Instant.now().minus(7, ChronoUnit.HOURS),
+                GameStatus.COMPLETED);
+        insertParticipant(gameId, owner.userId(), MatchParticipant.Role.OWNER, true);
+        insertParticipant(gameId, rater.userId(), MatchParticipant.Role.PLAYER, true);
+
+        mockMvc.perform(post("/api/games/{gameId}/ratings", gameId)
+                        .cookie(authCookie(rater.token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ratedPlayerId\":\"" + outsider.userId() + "\",\"score\":4}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("RATED_PLAYER_NOT_PARTICIPANT"));
+    }
+
+    @Test
+    void myGames_ratedPlayerAttendanceRequired_returns403() throws Exception {
+        AuthSession owner = registerAndAuth("ra2-owner@example.com", "Ra2 Owner");
+        AuthSession rater = registerAndAuth("ra2-rater@example.com", "Ra2 Rater");
+        AuthSession absent = registerAndAuth("ra2-absent@example.com", "Ra2 Absent");
+        UUID gameId = insertGame(owner.userId(), "Absent Ratee Turf",
+                Instant.now().minus(9, ChronoUnit.HOURS),
+                Instant.now().minus(7, ChronoUnit.HOURS),
+                GameStatus.COMPLETED);
+        insertParticipant(gameId, owner.userId(), MatchParticipant.Role.OWNER, true);
+        insertParticipant(gameId, rater.userId(), MatchParticipant.Role.PLAYER, true);
+        insertParticipant(gameId, absent.userId(), MatchParticipant.Role.PLAYER, false);
+
+        mockMvc.perform(post("/api/games/{gameId}/ratings", gameId)
+                        .cookie(authCookie(rater.token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ratedPlayerId\":\"" + absent.userId() + "\",\"score\":4}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("RATED_PLAYER_ATTENDANCE_REQUIRED"));
+    }
+
     // ── discovery unchanged ─────────────────────────────────────────────
 
     @Test

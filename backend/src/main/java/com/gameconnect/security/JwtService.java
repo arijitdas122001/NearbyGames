@@ -4,6 +4,8 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,15 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtService {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
+
+    /**
+     * Mirrors the {@code jwt.secret} fallback in {@code application.yml}. Used
+     * only to detect the insecure built-in default; it never signs tokens.
+     */
+    static final String DEFAULT_DEV_SECRET =
+            "myDefaultDevSecretKeyMustBeAtLeast32BytesLongForHs256";
+
     private final SecretKey signingKey;
     private final long expirationMillis;
 
@@ -23,6 +34,11 @@ public class JwtService {
             @Value("${jwt.expiration-minutes}") long expirationMinutes) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMillis = expirationMinutes * 60 * 1000;
+
+        if (DEFAULT_DEV_SECRET.equals(secret)) {
+            log.warn("jwt.secret is the built-in development default. "
+                    + "Set a strong, unique JWT_SECRET before deploying to production.");
+        }
     }
 
     public String generateToken(String userId, String email) {

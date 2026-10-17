@@ -296,6 +296,29 @@ class AttendanceIntegrationTest {
                 .andExpect(jsonPath("$.attended").value(true));
     }
 
+    /**
+     * A game can still be OPEN past endTime + grace when the completion
+     * scheduler has not run yet; attendance must already be closed by the
+     * time window, independent of status.
+     */
+    @Test
+    void attendance_afterGraceWindow_whileStillOpen_returns409GameAlreadyCompleted() throws Exception {
+        AuthSession owner = registerAndAuth("ag-owner@example.com", "AG Owner");
+        AuthSession player = registerAndAuth("ag-player@example.com", "AG Player");
+        Instant start = Instant.now().minus(9, ChronoUnit.HOURS);
+        Instant end = Instant.now().minus(7, ChronoUnit.HOURS);
+        UUID gameId = insertGame(owner.userId, start, end, GameStatus.OPEN);
+        insertParticipant(gameId, player.userId, MatchParticipant.Role.PLAYER, null);
+        String playerRow = rosterParticipantId(gameId.toString(), player.userId.toString());
+
+        mockMvc.perform(patch("/api/games/{gameId}/participants/{participantId}/attendance", gameId, playerRow)
+                        .cookie(authCookie(owner.token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"attended\": true}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GAME_ALREADY_COMPLETED"));
+    }
+
     @Test
     void attendance_nonOwner_returns403() throws Exception {
         AuthSession owner = registerAndAuth("no-owner@example.com", "NO Owner");

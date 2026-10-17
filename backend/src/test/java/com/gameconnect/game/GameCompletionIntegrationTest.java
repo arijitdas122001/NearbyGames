@@ -246,6 +246,56 @@ class GameCompletionIntegrationTest {
                 .andExpect(jsonPath("$.code").value("GAME_ALREADY_COMPLETED"));
     }
 
+    // ── scheduler startup: OPEN/FULL → IN_PROGRESS ───────────────────────
+
+    @Test
+    void startDueGames_flipsDueOpenGameToInProgress() throws Exception {
+        AuthSession owner = registerAndAuth("st-open@example.com", "ST Open");
+        Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
+        UUID gameId = insertGame(owner.userId, start, start.plus(2, ChronoUnit.HOURS), GameStatus.OPEN);
+
+        scheduler.startDueGames();
+
+        assertThat(statusOf(gameId)).isEqualTo(GameStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void startDueGames_flipsDueFullGameToInProgress() throws Exception {
+        AuthSession owner = registerAndAuth("st-full@example.com", "ST Full");
+        Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
+        UUID gameId = insertGame(owner.userId, start, start.plus(2, ChronoUnit.HOURS), GameStatus.FULL);
+
+        scheduler.startDueGames();
+
+        assertThat(statusOf(gameId)).isEqualTo(GameStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void startDueGames_leavesFutureGamesUnchanged() throws Exception {
+        AuthSession owner = registerAndAuth("st-future@example.com", "ST Future");
+        Instant start = Instant.now().plus(1, ChronoUnit.HOURS);
+        UUID openId = insertGame(owner.userId, start, start.plus(2, ChronoUnit.HOURS), GameStatus.OPEN);
+        UUID fullId = insertGame(owner.userId, start, start.plus(2, ChronoUnit.HOURS), GameStatus.FULL);
+
+        scheduler.startDueGames();
+
+        assertThat(statusOf(openId)).isEqualTo(GameStatus.OPEN);
+        assertThat(statusOf(fullId)).isEqualTo(GameStatus.FULL);
+    }
+
+    @Test
+    void startDueGames_isIdempotent() throws Exception {
+        AuthSession owner = registerAndAuth("st-idem@example.com", "ST Idem");
+        Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
+        UUID gameId = insertGame(owner.userId, start, start.plus(2, ChronoUnit.HOURS), GameStatus.OPEN);
+
+        scheduler.startDueGames();
+        assertThat(statusOf(gameId)).isEqualTo(GameStatus.IN_PROGRESS);
+
+        scheduler.startDueGames();
+        assertThat(statusOf(gameId)).isEqualTo(GameStatus.IN_PROGRESS);
+    }
+
     // ── stats contributions (attended-only) ─────────────────────────────
 
     @Test

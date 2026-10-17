@@ -5,14 +5,17 @@ import { useCallback, useEffect, useState } from "react";
 
 import { EditProfileForm } from "@/components/profile/EditProfileForm";
 import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
-import { ApiError } from "@/lib/api/client";
+import {
+  ApiError,
+  SESSION_EXPIRED_MESSAGE,
+  isSessionExpired,
+  signInHref,
+} from "@/lib/api/client";
 import { getMyProfile } from "@/lib/api/profile";
 import { useAuth } from "@/lib/auth-context";
 import type { UserProfile } from "@/lib/types";
 
 const SUCCESS_TIMEOUT_MS = 3000;
-
-const SESSION_EXPIRED = "Your session has expired. Please sign in again.";
 
 export default function ProfilePage() {
   // The session is the only source of the player's own email. The name is
@@ -37,11 +40,11 @@ export default function ProfilePage() {
       .catch((err) => {
         setProfile(null);
         setError(
-          err instanceof ApiError
-            ? err.status === 401
-              ? SESSION_EXPIRED
-              : err.message
-            : "An unexpected error occurred.",
+          isSessionExpired(err)
+            ? SESSION_EXPIRED_MESSAGE
+            : err instanceof ApiError
+              ? err.message
+              : "An unexpected error occurred.",
         );
       })
       .finally(() => setLoading(false));
@@ -106,9 +109,9 @@ export default function ProfilePage() {
             >
               Try again
             </button>
-            {error === SESSION_EXPIRED && (
+            {error === SESSION_EXPIRED_MESSAGE && (
               <Link
-                href="/login"
+                href={signInHref("/profile")}
                 className="flex-1 rounded-full bg-emerald-600 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-emerald-700"
               >
                 Sign in

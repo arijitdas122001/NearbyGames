@@ -3,12 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchMe as apiFetchMe, login as apiLogin, logout as apiLogout, register as apiRegister } from "./api/auth";
+import { safeReturnTo } from "./api/client";
 import type { AuthUser } from "./api/auth";
 
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, returnTo?: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -35,10 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, returnTo?: string) => {
     const u = await apiLogin(email, password);
     setUser(u);
-    router.push("/games");
+    router.push(safeReturnTo(returnTo) ?? "/games");
   }, [router]);
 
   const register = useCallback(async (email: string, password: string, displayName: string) => {

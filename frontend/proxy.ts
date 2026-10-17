@@ -15,7 +15,10 @@ export function proxy(request: NextRequest) {
   const isAuthenticated = hasAuthCookie(request);
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    if (isAuthenticated) {
+    // A stale cookie that no longer maps to a session must not trap the user
+    // in a redirect loop: session-expiry links carry ?next= to force the
+    // sign-in form through, so only bare /login visits bounce to the app.
+    if (isAuthenticated && !request.nextUrl.searchParams.has("next")) {
       return NextResponse.redirect(new URL("/games", request.url));
     }
     return NextResponse.next();

@@ -198,7 +198,13 @@ export function JoinRequestAction({
     );
   }
 
-  if (status !== "OPEN" || spotsRemaining <= 0) return null;
+  if (status !== "OPEN" || spotsRemaining <= 0) {
+    return (
+      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+        {unavailableMessage(status, spotsRemaining)}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4">
@@ -217,4 +223,28 @@ export function JoinRequestAction({
       )}
     </div>
   );
+}
+
+/**
+ * Why the join action is unavailable, mirroring the backend's create-request
+ * rules: only OPEN games with a free slot accept new requests.
+ */
+function unavailableMessage(
+  status: GameStatus,
+  spotsRemaining: number,
+): string {
+  switch (status) {
+    case "FULL":
+      return "This game is full.";
+    case "IN_PROGRESS":
+      return "This game has already started.";
+    case "COMPLETED":
+      return "This game has completed.";
+    case "CANCELLED":
+      return "This game has been cancelled.";
+    default:
+      return spotsRemaining <= 0
+        ? "This game is full."
+        : "This game is no longer accepting requests.";
+  }
 }

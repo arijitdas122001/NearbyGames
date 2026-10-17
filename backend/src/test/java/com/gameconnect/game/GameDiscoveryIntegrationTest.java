@@ -1,5 +1,6 @@
 package com.gameconnect.game;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,6 +11,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -254,6 +259,58 @@ class GameDiscoveryIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0))
                 .andExpect(jsonPath("$.totalElements").value(5));
+    }
+
+    @Test
+    void listing_identicalStartTimes_paginateByStableIdOrderWithoutDupesOrOmissions() throws Exception {
+        AuthSession owner = registerAndAuth("tieown@example.com", "Tie Owner");
+        Instant shared = Instant.now().plus(1, ChronoUnit.DAYS);
+        LocalDate date = LocalDate.ofInstant(shared, INDIA);
+        List<String> created = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Game game = insertGame(owner.userId, "Tie Turf " + i, "Addr " + i, date,
+                    shared, shared.plusSeconds(3600),
+                    GameFormat.FIVE_V5, SkillLevel.BEGINNER, 10, GameStatus.OPEN);
+            created.add(game.getId().toString());
+        }
+
+        List<String> firstWalk = walkDiscoveryPages(owner.token, 2);
+        List<String> secondWalk = walkDiscoveryPages(owner.token, 2);
+
+        assertThat(new HashSet<>(firstWalk)).isEqualTo(new HashSet<>(created));
+        assertThat(firstWalk).doesNotHaveDuplicates();
+        assertThat(firstWalk).hasSize(created.size());
+
+        // Identical start times, so the only tiebreaker is the id: ascending and stable.
+        List<String> sortedById = new ArrayList<>(firstWalk);
+        Collections.sort(sortedById);
+        assertThat(firstWalk).isEqualTo(sortedById);
+        assertThat(secondWalk).isEqualTo(firstWalk);
+    }
+
+    private List<String> walkDiscoveryPages(String token, int size) throws Exception {
+        List<String> ids = new ArrayList<>();
+        int page = 0;
+        while (true) {
+            MvcResult result = mockMvc.perform(get("/api/games")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(size))
+                            .cookie(authCookie(token)))
+                    .andExpect(status().isOk())
+                    .andReturn();
+            var root = objectMapper.readTree(result.getResponse().getContentAsString());
+            for (var node : root.get("content")) {
+                ids.add(node.get("id").asText());
+            }
+            if (root.get("last").asBoolean()) {
+                break;
+            }
+            page++;
+            if (page > 50) {
+                throw new IllegalStateException("discovery pagination did not terminate");
+            }
+        }
+        return ids;
     }
 
     // ── listing: filters ─────────────────────────────────────────────────

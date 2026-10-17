@@ -1,5 +1,8 @@
 const API_BASE_URL = "/api";
 
+export const SESSION_EXPIRED_MESSAGE =
+  "Your session has expired. Please sign in again.";
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -9,6 +12,34 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+/**
+ * A 401 means the cookie no longer maps to a valid session. Everything else
+ * (validation, not found, server errors) is an ordinary failure that must not
+ * be presented as a sign-in problem.
+ */
+export function isSessionExpired(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401;
+}
+
+/**
+ * Only same-site absolute paths are safe to bounce back to after sign-in; an
+ * empty, protocol-relative (`//evil.test`) or off-site value is discarded.
+ */
+export function safeReturnTo(
+  value: string | null | undefined,
+): string | undefined {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return undefined;
+  }
+  return value;
+}
+
+/** Builds a login link that returns the user to `returnTo` after signing in. */
+export function signInHref(returnTo?: string | null): string {
+  const target = safeReturnTo(returnTo);
+  return target ? `/login?next=${encodeURIComponent(target)}` : "/login";
 }
 
 interface RequestOptions extends Omit<RequestInit, "body"> {

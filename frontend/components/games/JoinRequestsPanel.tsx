@@ -9,6 +9,7 @@ import {
 } from "@/lib/api/join-requests";
 import { formatIST } from "@/lib/format";
 import type {
+  GameStatus,
   JoinDecision,
   JoinRequestDetail,
   PlayerStats,
@@ -66,11 +67,13 @@ function ratingSummary(stats: PlayerStats | null | undefined): string {
 
 interface JoinRequestsPanelProps {
   gameId: string;
+  status: GameStatus;
   onRequestDecided?: () => void;
 }
 
 export function JoinRequestsPanel({
   gameId,
+  status,
   onRequestDecided,
 }: JoinRequestsPanelProps) {
   const [requests, setRequests] = useState<JoinRequestDetail[] | null>(null);
@@ -243,7 +246,7 @@ export function JoinRequestsPanel({
                 </div>
               </div>
 
-              {request.status === "PENDING" && (
+              {request.status === "PENDING" && status === "OPEN" && (
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
