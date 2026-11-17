@@ -448,7 +448,7 @@ F:\Game-connect\backend\src\test\java\com\gameconnect\profile
 51: NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
 52: 
 53: #---Notfication service-----------------------------------------------
-54: RESEND_API_KEY=re_QReDxsqE_8CP88vJzjy2McbFnCMHt8sfu
+54: 
 
 (End of file - total 54 lines)
 </content>
@@ -2856,7 +2856,7 @@ index a61dd4f..149e14d 100644
  NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
 +
 +#---Notfication service-----------------------------------------------
-+RESEND_API_KEY=re_QReDxsqE_8CP88vJzjy2McbFnCMHt8sfu
++
 
 ```
 
@@ -7607,7 +7607,7 @@ Edit applied successfully.
 ```json
 {
   "filePath": "F:\\Game-connect\\.env.example",
-  "oldString": "#---Notfication service-----------------------------------------------\nRESEND_API_KEY=re_QReDxsqE_8CP88vJzjy2McbFnCMHt8sfu",
+  "oldString": "#---Notfication service-----------------------------------------------\n",
   "newString": "# --- Notifications (Resend) ----------------------------------------------\n# Transactional email provider. Both values are optional in local development:\n# the application starts without them, but email delivery fails until they are\n# set. Never commit real credentials.\nRESEND_API_KEY=replace-with-your-resend-api-key\n# Sender address; must be on a domain verified in Resend.\nMAIL_FROM=GameConnect <reminders@example.com>"
 }
 ```
