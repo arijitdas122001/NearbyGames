@@ -26,6 +26,11 @@ game-completion:
 cookie:
   secure: ${COOKIE_SECURE:false}
 
+mail:
+  from: ${MAIL_FROM:}
+  resend:
+    api-key: ${RESEND_API_KEY:}
+
 management:
   endpoints:
     web:

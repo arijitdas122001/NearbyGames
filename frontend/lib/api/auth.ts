@@ -19,12 +19,12 @@ export async function register(email: string, password: string, displayName: str
   });
 }
 
-export async function login(email: string, password: string): Promise<AuthUser> {
-  return apiFetch<AuthUser>("/auth/login", {
-    method: "POST",
-    body: { email, password },
-  });
-}
+  export async function login(email: string, password: string): Promise<AuthUser> {
+    return apiFetch<AuthUser>("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
+  }
 
 export async function fetchMe(): Promise<MeUser> {
   return apiFetch<MeUser>("/auth/me");

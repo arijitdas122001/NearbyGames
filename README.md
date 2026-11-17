@@ -113,6 +113,12 @@ be set for the steps above.
 | `JWT_EXPIRATION_MINUTES` | `60` | JWT **and** auth-cookie lifetime, in minutes |
 | `GAME_COMPLETION_GRACE` | `6h` | Grace after a game's end time before auto-completion (ISO-8601 duration, e.g. `6h`, `30m`) |
 | `COOKIE_SECURE` | `false` | Marks the auth cookie `Secure` (set `true` under HTTPS) |
+| `RESEND_API_KEY` | _(empty)_ | Resend API key used to send notification emails. Optional in local development; email delivery fails until set. |
+| `MAIL_FROM` | _(empty)_ | Sender address for notification emails; must be on a Resend-verified domain. |
+
+> Notification emails are not scheduled or sent yet — Group 1 adds only the
+> provider integration, persistence model, and repository. The application
+> starts normally when `RESEND_API_KEY` / `MAIL_FROM` are absent.
 
 Frontend:
 
