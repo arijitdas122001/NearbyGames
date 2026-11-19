@@ -7,11 +7,26 @@ package com.gameconnect.notification.email;
  */
 public class EmailDeliveryException extends RuntimeException {
 
+    private final boolean retryable;
+
     public EmailDeliveryException(String message) {
-        super(message);
+        this(message, null, false);
+    }
+
+    public EmailDeliveryException(String message, boolean retryable) {
+        this(message, null, retryable);
     }
 
     public EmailDeliveryException(String message, Throwable cause) {
+        this(message, cause, true);
+    }
+
+    public EmailDeliveryException(String message, Throwable cause, boolean retryable) {
         super(message, cause);
+        this.retryable = retryable;
+    }
+
+    public boolean isRetryable() {
+        return retryable;
     }
 }

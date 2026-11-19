@@ -33,6 +33,7 @@ import com.gameconnect.game.entity.MatchParticipant;
 import com.gameconnect.game.repository.GameRepository;
 import com.gameconnect.game.repository.JoinRequestRepository;
 import com.gameconnect.game.repository.MatchParticipantRepository;
+import com.gameconnect.notification.service.NotificationSchedulingService;
 import com.gameconnect.security.JwtAuthenticationFilter.AuthenticatedUser;
 
 @Service
@@ -46,15 +47,18 @@ public class GameService {
     private final MatchParticipantRepository matchParticipantRepository;
     private final JoinRequestRepository joinRequestRepository;
     private final UserRepository userRepository;
+    private final NotificationSchedulingService notificationSchedulingService;
 
     public GameService(GameRepository gameRepository,
                        MatchParticipantRepository matchParticipantRepository,
                        JoinRequestRepository joinRequestRepository,
-                       UserRepository userRepository) {
+                       UserRepository userRepository,
+                       NotificationSchedulingService notificationSchedulingService) {
         this.gameRepository = gameRepository;
         this.matchParticipantRepository = matchParticipantRepository;
         this.joinRequestRepository = joinRequestRepository;
         this.userRepository = userRepository;
+        this.notificationSchedulingService = notificationSchedulingService;
     }
 
     @Transactional
@@ -94,6 +98,9 @@ public class GameService {
         participant.setRole(MatchParticipant.Role.OWNER);
         participant.setAttended(null);
         matchParticipantRepository.save(participant);
+
+        notificationSchedulingService.scheduleAcceptedParticipant(
+                game.getId(), owner.id(), game.getStartTime());
 
         return toResponse(game);
     }

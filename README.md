@@ -115,10 +115,19 @@ be set for the steps above.
 | `COOKIE_SECURE` | `false` | Marks the auth cookie `Secure` (set `true` under HTTPS) |
 | `RESEND_API_KEY` | _(empty)_ | Resend API key used to send notification emails. Optional in local development; email delivery fails until set. |
 | `MAIL_FROM` | _(empty)_ | Sender address for notification emails; must be on a Resend-verified domain. |
+| `NOTIFICATION_SCHEDULER_ENABLED` | `true` | Enables the due-reminder polling worker. |
+| `NOTIFICATION_POLL_INTERVAL` | `10s` | Delay between reminder polling runs. |
+| `NOTIFICATION_BATCH_SIZE` | `50` | Maximum reminders claimed per poll. |
+| `NOTIFICATION_MAX_ATTEMPTS` | `3` | Total delivery attempts before a reminder is marked `FAILED`. |
+| `NOTIFICATION_RETRY_BASE_DELAY` | `1m` | Exponential-backoff base delay; jitter is added. |
+| `NOTIFICATION_STALE_PROCESSING_TIMEOUT` | `10m` | Age after which a stuck `PROCESSING` reminder can be retried. |
 
-> Notification emails are not scheduled or sent yet — Group 1 adds only the
-> provider integration, persistence model, and repository. The application
-> starts normally when `RESEND_API_KEY` / `MAIL_FROM` are absent.
+> The application starts normally when `RESEND_API_KEY` / `MAIL_FROM` are
+> absent, but delivery attempts fail clearly until both are configured.
+> Reminder delivery is **at-least-once**: if Resend accepts an email and the
+> application crashes before persisting `SENT`, a retry can send a duplicate
+> email. The claim/retry mechanism prevents concurrent workers from claiming the
+> same row, but it cannot provide exactly-once delivery across the external API.
 
 Frontend:
 

@@ -39,7 +39,7 @@ public class EmailConfiguration {
         if (!hasApiKey || !hasFrom) {
             return message -> {
                 throw new EmailDeliveryException(
-                        "Email delivery is not configured: set RESEND_API_KEY and MAIL_FROM");
+                        "Email delivery is not configured: set RESEND_API_KEY and MAIL_FROM", false);
             };
         }
 

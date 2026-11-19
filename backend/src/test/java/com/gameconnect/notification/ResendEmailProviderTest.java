@@ -60,7 +60,49 @@ class ResendEmailProviderTest {
                 "player@example.com", "Game reminder", "Body", null)))
                 .isInstanceOf(EmailDeliveryException.class)
                 .hasMessageContaining("Resend")
-                .satisfies(error -> assertThat(error.getCause()).isSameAs(providerError));
+                .satisfies(error -> {
+                    assertThat(error.getCause()).isSameAs(providerError);
+                    assertThat(((EmailDeliveryException) error).isRetryable()).isFalse();
+                });
+    }
+
+    @Test
+    void classifiesRateLimitAsRetryable() throws ResendException {
+        ResendException providerError = new ResendException(429, "{\"message\":\"rate limited\"}");
+        when(emails.send(any(CreateEmailOptions.class))).thenThrow(providerError);
+        ResendEmailProvider provider = new ResendEmailProvider(emails, FROM);
+
+        assertThatThrownBy(() -> provider.send(new EmailMessage(
+                "player@example.com", "Game reminder", "Body", null)))
+                .isInstanceOf(EmailDeliveryException.class)
+                .satisfies(error -> assertThat(((EmailDeliveryException) error).isRetryable()).isTrue());
+    }
+
+    @Test
+    void classifiesServerErrorAsRetryable() throws ResendException {
+        ResendException providerError = new ResendException(503, "{\"message\":\"unavailable\"}");
+        when(emails.send(any(CreateEmailOptions.class))).thenThrow(providerError);
+        ResendEmailProvider provider = new ResendEmailProvider(emails, FROM);
+
+        assertThatThrownBy(() -> provider.send(new EmailMessage(
+                "player@example.com", "Game reminder", "Body", null)))
+                .isInstanceOf(EmailDeliveryException.class)
+                .satisfies(error -> assertThat(((EmailDeliveryException) error).isRetryable()).isTrue());
+    }
+
+    @Test
+    void classifiesTransportFailureAsRetryable() throws ResendException {
+        IllegalStateException transportError = new IllegalStateException("connection reset");
+        when(emails.send(any(CreateEmailOptions.class))).thenThrow(transportError);
+        ResendEmailProvider provider = new ResendEmailProvider(emails, FROM);
+
+        assertThatThrownBy(() -> provider.send(new EmailMessage(
+                "player@example.com", "Game reminder", "Body", null)))
+                .isInstanceOf(EmailDeliveryException.class)
+                .satisfies(error -> {
+                    assertThat(error.getCause()).isSameAs(transportError);
+                    assertThat(((EmailDeliveryException) error).isRetryable()).isTrue();
+                });
     }
 
     @Test
@@ -70,7 +112,8 @@ class ResendEmailProviderTest {
         assertThatThrownBy(() -> provider.send(new EmailMessage(
                 "player@example.com", "Game reminder", "Body", null)))
                 .isInstanceOf(EmailDeliveryException.class)
-                .hasMessageContaining("MAIL_FROM");
+                .hasMessageContaining("MAIL_FROM")
+                .satisfies(error -> assertThat(((EmailDeliveryException) error).isRetryable()).isFalse());
 
         verifyNoInteractions(emails);
     }

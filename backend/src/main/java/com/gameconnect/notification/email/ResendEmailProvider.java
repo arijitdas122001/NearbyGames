@@ -29,7 +29,7 @@ public class ResendEmailProvider implements EmailProvider {
     @Override
     public String send(EmailMessage message) {
         if (fromAddress == null || fromAddress.isBlank()) {
-            throw new EmailDeliveryException("MAIL_FROM is not configured");
+            throw new EmailDeliveryException("MAIL_FROM is not configured", false);
         }
 
         CreateEmailOptions.Builder options = CreateEmailOptions.builder()
@@ -47,13 +47,19 @@ public class ResendEmailProvider implements EmailProvider {
         try {
             CreateEmailResponse response = emails.send(options.build());
             if (response == null || response.getId() == null || response.getId().isBlank()) {
-                throw new EmailDeliveryException("Resend returned an empty message id");
+                throw new EmailDeliveryException("Resend returned an empty message id", false);
             }
             return response.getId();
         } catch (ResendException e) {
+            int statusCode = e.getStatusCode();
+            boolean retryable = statusCode == 429 || statusCode >= 500;
             log.warn("Resend email delivery failed (status={}, error={})",
-                    e.getStatusCode(), e.getErrorName());
-            throw new EmailDeliveryException("Resend email delivery failed", e);
+                    statusCode, e.getErrorName());
+            throw new EmailDeliveryException("Resend email delivery failed", e, retryable);
+        } catch (EmailDeliveryException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new EmailDeliveryException("Resend email transport failed", e, true);
         }
     }
 }

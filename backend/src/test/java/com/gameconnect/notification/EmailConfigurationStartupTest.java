@@ -45,7 +45,9 @@ class EmailConfigurationStartupTest {
                     assertThatThrownBy(() -> provider.send(new EmailMessage(
                             "player@example.com", "Game reminder", "Body", null)))
                             .isInstanceOf(EmailDeliveryException.class)
-                            .hasMessageContaining("not configured");
+                            .hasMessageContaining("not configured")
+                            .satisfies(error -> assertThat(((EmailDeliveryException) error).isRetryable())
+                                    .isFalse());
                 });
     }
 }

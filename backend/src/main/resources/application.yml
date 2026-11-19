@@ -31,6 +31,14 @@ mail:
   resend:
     api-key: ${RESEND_API_KEY:}
 
+notifications:
+  scheduler-enabled: ${NOTIFICATION_SCHEDULER_ENABLED:true}
+  poll-interval: ${NOTIFICATION_POLL_INTERVAL:10s}
+  batch-size: ${NOTIFICATION_BATCH_SIZE:50}
+  max-attempts: ${NOTIFICATION_MAX_ATTEMPTS:3}
+  base-retry-delay: ${NOTIFICATION_RETRY_BASE_DELAY:1m}
+  stale-processing-timeout: ${NOTIFICATION_STALE_PROCESSING_TIMEOUT:10m}
+
 management:
   endpoints:
     web:

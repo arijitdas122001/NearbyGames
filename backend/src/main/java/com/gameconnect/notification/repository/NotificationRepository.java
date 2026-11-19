@@ -18,6 +18,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     List<Notification> findByGameIdAndUserId(UUID gameId, UUID userId);
 
+    List<Notification> findByGameIdAndNotificationType(UUID gameId, NotificationType notificationType);
+
     List<Notification> findByStatus(NotificationStatus status);
 
     /**

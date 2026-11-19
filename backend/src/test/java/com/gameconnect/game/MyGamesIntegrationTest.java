@@ -80,6 +80,7 @@ class MyGamesIntegrationTest {
         jdbcTemplate.execute("DELETE FROM player_rating");
         jdbcTemplate.execute("DELETE FROM match_participant");
         jdbcTemplate.execute("DELETE FROM join_request");
+        jdbcTemplate.execute("DELETE FROM notification");
         jdbcTemplate.execute("DELETE FROM game");
         jdbcTemplate.execute("DELETE FROM app_user");
     }

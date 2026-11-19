@@ -25,6 +25,7 @@ import com.gameconnect.game.entity.MatchParticipant;
 import com.gameconnect.game.repository.GameRepository;
 import com.gameconnect.game.repository.JoinRequestRepository;
 import com.gameconnect.game.repository.MatchParticipantRepository;
+import com.gameconnect.notification.service.NotificationSchedulingService;
 import com.gameconnect.profile.dto.PlayerStatsResponse;
 import com.gameconnect.profile.service.PlayerStatsService;
 import com.gameconnect.security.JwtAuthenticationFilter.AuthenticatedUser;
@@ -37,17 +38,20 @@ public class JoinRequestService {
     private final MatchParticipantRepository matchParticipantRepository;
     private final UserRepository userRepository;
     private final PlayerStatsService playerStatsService;
+    private final NotificationSchedulingService notificationSchedulingService;
 
     public JoinRequestService(JoinRequestRepository joinRequestRepository,
                               GameRepository gameRepository,
                               MatchParticipantRepository matchParticipantRepository,
                               UserRepository userRepository,
-                              PlayerStatsService playerStatsService) {
+                              PlayerStatsService playerStatsService,
+                              NotificationSchedulingService notificationSchedulingService) {
         this.joinRequestRepository = joinRequestRepository;
         this.gameRepository = gameRepository;
         this.matchParticipantRepository = matchParticipantRepository;
         this.userRepository = userRepository;
         this.playerStatsService = playerStatsService;
+        this.notificationSchedulingService = notificationSchedulingService;
     }
 
     @Transactional
@@ -229,6 +233,9 @@ public class JoinRequestService {
         participant.setRole(MatchParticipant.Role.PLAYER);
         participant.setAttended(null);
         matchParticipantRepository.save(participant);
+
+        notificationSchedulingService.scheduleAcceptedParticipant(
+                game.getId(), joinRequest.getUserId(), game.getStartTime());
 
         joinRequest.setStatus(RequestStatus.ACCEPTED);
         joinRequest.setDecidedAt(Instant.now());
